@@ -49,4 +49,15 @@ mod tests {
         println!("OpenAI response: {:?}", result);
         assert!(result.is_ok());
     }
+
+    #[tokio::test]
+    async fn test_gemini() {
+        dotenv().ok();
+        let api_key = std::env::var("GEMINI_API_KEY").expect("GEMINI_API_KEY not set");
+        let client = providers::gemini::GeminiClient::new(api_key);
+
+        let result = client.generate("Say hello in one word").await;
+        println!("Gemini response: {:?}", result);
+        assert!(result.is_ok());
+    }
 }
