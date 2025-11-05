@@ -4,7 +4,9 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use std::sync::Arc;
 use serde::{Deserialize, Serialize};
+use crate::router::AIRouter;
 
 #[derive(Deserialize)]
 pub struct GenerateRequest {
@@ -23,12 +25,13 @@ pub async fn health() -> impl IntoResponse {
 }
 
 pub async fn generate(
+    State(router): State<Arc<AIRouter>>,
     Json(payload): Json<GenerateRequest>,
-) -> impl IntoResponse {
-    let response = GenerateResponse {
-        provider: "openai".to_string(),
-        output: "Generated text".to_string(),
-    };
+) -> Result<Json<GenerateResponse>, crate::error::GatewayError>{
+    let (output, provider) = router.generate(&payload.prompt).await?;
 
-    (StatusCode::OK, Json(response))
+    Ok(Json(GenerateResponse {
+        provider,
+        output
+    }))
 }
