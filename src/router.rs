@@ -1,15 +1,18 @@
 use crate::error::GatewayError;
 use crate::providers::AIProvider;
 use std::sync::Arc;
+use crate::cache::Cache;
 
 pub struct AIRouter {
     providers: Vec<Arc<dyn AIProvider>>,
+    cache: Cache,
 }
 
 impl AIRouter {
     pub fn new() -> Self {
         Self {
             providers: Vec::new(),
+            cache: Cache::new(),
         }
     }
 
@@ -18,13 +21,18 @@ impl AIRouter {
     }
 
     pub async fn generate(&self, prompt: &str) -> Result<(String, String), GatewayError> {
+        if let Some(cached) = self.cache.get(prompt) {
+            return Ok(cached);
+        }
         let mut last_error = None;
         for provider in &self.providers {
             tracing::info!("Trying provider: {}", provider.name());
             match provider.generate(prompt).await {
                 Ok(response) => {
-                    tracing::info!("Provider {} succeeded", provider.name());
-                    return Ok(( response, provider.name().to_string()));
+                    let provider_name = provider.name().to_string();
+                    tracing::info!("Provider {} succeeded", provider_name.clone());
+                    self.cache.set(prompt.to_string(), response.clone(), provider_name.clone());
+                    return Ok(( response, provider_name));
                 }
                 Err(err) => {
                     tracing::warn!("Provider {} failed: {}", provider.name(), err);
