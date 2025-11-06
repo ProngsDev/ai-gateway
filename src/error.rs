@@ -14,8 +14,8 @@ pub enum GatewayError {
     #[error("All providers failed")]
     AllProvidersFailed,
 
-    #[error("Missing configuration: {0}")]
-    ConfigError(String),
+    // #[error("Missing configuration: {0}")]
+    // ConfigError(String),
 }
 
 impl axum::response::IntoResponse for GatewayError {

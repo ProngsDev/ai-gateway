@@ -55,15 +55,15 @@ async fn main() {
 
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
-    use providers::{AIProvider, openai::OpenAIClient};
 
     #[tokio::test]
     async fn test_openai() {
         dotenv().ok();
         let api_key = std::env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set");
-        let client = OpenAIClient::new(api_key);
+        let client = providers::openai::OpenAIClient::new(api_key);
 
         let result = client.generate("Say hello in one word").await;
         println!("OpenAI response: {:?}", result);
