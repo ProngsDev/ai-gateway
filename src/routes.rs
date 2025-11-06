@@ -18,6 +18,7 @@ pub struct GenerateRequest {
 pub struct GenerateResponse {
     pub provider: String,
     pub output: String,
+    pub cached: bool,
 }
 
 pub async fn health() -> impl IntoResponse {
@@ -28,10 +29,11 @@ pub async fn generate(
     State(router): State<Arc<AIRouter>>,
     Json(payload): Json<GenerateRequest>,
 ) -> Result<Json<GenerateResponse>, crate::error::GatewayError>{
-    let (output, provider) = router.generate(&payload.prompt).await?;
+    let (output, provider, cached) = router.generate(&payload.prompt).await?;
 
     Ok(Json(GenerateResponse {
         provider,
-        output
+        output,
+        cached
     }))
 }

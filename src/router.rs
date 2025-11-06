@@ -20,9 +20,9 @@ impl AIRouter {
         self.providers.push(provider);
     }
 
-    pub async fn generate(&self, prompt: &str) -> Result<(String, String), GatewayError> {
-        if let Some(cached) = self.cache.get(prompt) {
-            return Ok(cached);
+    pub async fn generate(&self, prompt: &str) -> Result<(String, String, bool), GatewayError> {
+        if let Some((response, provider_name)) = self.cache.get(prompt) {
+            return Ok((response.clone(), provider_name.clone(), true));
         }
         let mut last_error = None;
         for provider in &self.providers {
@@ -32,7 +32,7 @@ impl AIRouter {
                     let provider_name = provider.name().to_string();
                     tracing::info!("Provider {} succeeded", provider_name.clone());
                     self.cache.set(prompt.to_string(), response.clone(), provider_name.clone());
-                    return Ok(( response, provider_name));
+                    return Ok(( response, provider_name, false));
                 }
                 Err(err) => {
                     tracing::warn!("Provider {} failed: {}", provider.name(), err);
