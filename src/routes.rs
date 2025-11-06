@@ -11,7 +11,7 @@ use crate::router::AIRouter;
 #[derive(Deserialize)]
 pub struct GenerateRequest {
     pub prompt: String,
-    pub model: Option<String>, // "openai" | "gemini"
+    pub provider: Option<String>, // "openai" | "gemini"
 }
 
 #[derive(Serialize)]
@@ -29,7 +29,19 @@ pub async fn generate(
     State(router): State<Arc<AIRouter>>,
     Json(payload): Json<GenerateRequest>,
 ) -> Result<Json<GenerateResponse>, crate::error::GatewayError>{
-    let (output, provider, cached) = router.generate(&payload.prompt).await?;
+    tracing::info!("Request: prompt length={}, provider={:?}", payload.prompt.len(), payload.provider);
+
+    let (output, provider, cached) = match payload.provider {
+        Some(ref provider_name) => {
+            router.generate_with_provider(&payload.prompt, provider_name).await?
+        }
+        None => {
+            router.generate(&payload.prompt).await?
+        }
+    };
+
+    tracing::info!("Response: provider={}, cached={}, length={}",
+        provider, cached, output.len());
 
     Ok(Json(GenerateResponse {
         provider,

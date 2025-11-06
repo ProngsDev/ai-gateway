@@ -20,6 +20,31 @@ impl AIRouter {
         self.providers.push(provider);
     }
 
+    pub async fn generate_with_provider(
+        &self,
+        prompt: &str,
+        provider_name: &str,
+    ) -> Result<(String, String, bool), GatewayError> {
+        if let Some((response, cached_provider)) = self.cache.get(prompt) {
+            return Ok((response, cached_provider, true));
+        }
+
+        for provider in &self.providers {
+            if provider.name().to_lowercase() == provider_name.to_lowercase() {
+                tracing::info!("Trying provider: {}", provider.name());
+                let response = provider.generate(prompt).await?;
+                let provider_name = provider.name().to_string();
+                self.cache.set(prompt.to_string(), response.clone(), provider_name.clone());
+                return Ok((response, provider_name, false));
+            }
+        }
+
+        Err(GatewayError::ProviderError(
+            format!("Provider '{}' not found. Available: OpenAI, Gemini",
+                provider_name)
+        ))
+    }
+
     pub async fn generate(&self, prompt: &str) -> Result<(String, String, bool), GatewayError> {
         if let Some((response, provider_name)) = self.cache.get(prompt) {
             return Ok((response.clone(), provider_name.clone(), true));
