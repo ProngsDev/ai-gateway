@@ -52,7 +52,7 @@ A lightning-fast, production-ready API gateway that unifies OpenAI and Google Ge
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/ProngsDev/ai-gateway.git
    cd ai-gateway
    ```
 
